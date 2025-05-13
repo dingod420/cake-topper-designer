@@ -268,14 +268,17 @@ export default function TextFormatToolbar({
       <div className="flex items-center gap-3 border-l border-gray-200 pl-2">
         <div className="flex flex-col items-center">
           <span className="text-xs text-gray-500">Letter Spacing</span>
-          <input
-            type="range"
-            min="-50"
-            max="500"
-            value={letterSpacing}
-            onChange={handleLetterSpacing}
-            className="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min="-100"
+              max="100"
+              value={letterSpacing}
+              onChange={handleLetterSpacing}
+              className="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <span className="text-xs w-8">{letterSpacing}</span>
+          </div>
         </div>
       </div>
     </div>

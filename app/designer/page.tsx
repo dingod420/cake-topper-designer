@@ -86,23 +86,29 @@ export default function Designer() {
     if (type === 'text') {
       let newElement;
       if (shape) {
-        newElement = {
-          id: shape.id || `text-${Date.now()}`,
-          type: 'text',
-          x,
-          y,
-          text: shape.text || 'Double click to edit',
-          angle: 0,
-          scale: 1,
-          fontSize: shape.fontSize || 40,
-          fontFamily: shape.fontFamily || 'Poppins',
-          fontWeight: shape.fontWeight || 400,
-          fontStyle: shape.fontStyle || 'normal',
-          textTransform: shape.textTransform || 'none',
-          textAlign: shape.textAlign || 'center',
-          charSpacing: shape.charSpacing || 0,
-          textBaseline: 'alphabetic',
-        };
+        if (shape.type === 'bridgeText') {
+          console.log('Adding bridgeText to elements', shape);
+          // Preserve all properties for bridgeText
+          newElement = { ...shape, x, y };
+        } else {
+          newElement = {
+            id: shape.id || `text-${Date.now()}`,
+            type: 'text',
+            x,
+            y,
+            text: shape.text || 'Double click to edit',
+            angle: 0,
+            scale: 1,
+            fontSize: shape.fontSize || 40,
+            fontFamily: shape.fontFamily || 'Poppins',
+            fontWeight: shape.fontWeight || 400,
+            fontStyle: shape.fontStyle || 'normal',
+            textTransform: shape.textTransform || 'none',
+            textAlign: shape.textAlign || 'center',
+            charSpacing: shape.charSpacing || 0,
+            textBaseline: 'alphabetic',
+          };
+        }
       } else {
         newElement = {
           id: `text-${Date.now()}`,

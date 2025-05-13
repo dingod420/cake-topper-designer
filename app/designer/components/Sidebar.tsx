@@ -99,7 +99,7 @@ interface TextElement {
 }
 
 interface SidebarProps {
-  onRequestAddElement: (type: 'shape' | 'text', shape?: typeof defaultShapes[0] | { id: string; name: string; svg: string; icon?: (props: React.SVGProps<SVGSVGElement>) => JSX.Element } | TextElement) => void;
+  onRequestAddElement: (type: 'shape' | 'text', shape?: any) => void;
   selectedTextObject?: any;
   onSidebarTextUpdate?: (updates: any) => void;
 }
@@ -213,7 +213,7 @@ export default function Sidebar({ onRequestAddElement, selectedTextObject, onSid
   const [sidebarLetterSpacing, setSidebarLetterSpacing] = useState(0);
   const [sidebarPreviewText, setSidebarPreviewText] = useState('Your Text');
 
-  // If a text object is selected, use its properties for the controls
+  // Only update sidebarCurveRadius when selectedTextObject changes
   useEffect(() => {
     if (selectedTextObject) {
       setSidebarFont(fonts.find(f => f.value === selectedTextObject.fontFamily) || fonts[0]);
@@ -224,7 +224,6 @@ export default function Sidebar({ onRequestAddElement, selectedTextObject, onSid
       setSidebarLetterSpacing(selectedTextObject.charSpacing || 0);
       setSidebarPreviewText(selectedTextObject.text || '');
     } else {
-      // Reset to defaults when no text is selected
       setSidebarFont(fonts[0]);
       setSidebarFontSize(20);
       setSidebarFontWeight(400);
@@ -237,6 +236,7 @@ export default function Sidebar({ onRequestAddElement, selectedTextObject, onSid
 
   // When a control is changed and a text object is selected, update the canvas live
   function updateTextFormat(updates: any) {
+    console.log('[Sidebar] updateTextFormat called', { updates, selectedTextObject });
     if ('fontFamily' in updates) setSidebarFont(fonts.find(f => f.value === updates.fontFamily) || fonts[0]);
     if ('fontSize' in updates) setSidebarFontSize(updates.fontSize);
     if ('fontWeight' in updates) setSidebarFontWeight(updates.fontWeight);
@@ -442,109 +442,97 @@ export default function Sidebar({ onRequestAddElement, selectedTextObject, onSid
                           </div>
                         </Tab.Panel>
                         <Tab.Panel>
-                          <div className="flex flex-col gap-3">
-                            <label htmlFor="sidebar-text-input" className="text-xs font-medium text-gray-700 mb-1">Enter your text:</label>
-                            <input
-                              id="sidebar-text-input"
-                              type="text"
-                              value={sidebarPreviewText}
-                              onChange={e => setSidebarPreviewText(e.target.value)}
-                              className="w-full px-2 py-1 border rounded text-center"
-                              placeholder="Preview text..."
-                            />
-                            {/* Font Controls */}
+                          <div className="flex flex-col gap-4">
+                            <div className="mb-2 pb-2 border-b">
+                              <label htmlFor="sidebar-text-input" className="text-xs font-medium text-gray-700 mb-1 block">Enter your text</label>
+                              <input
+                                id="sidebar-text-input"
+                                type="text"
+                                value={sidebarPreviewText}
+                                onChange={e => setSidebarPreviewText(e.target.value)}
+                                className="w-full px-3 py-2 border rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-200"
+                                placeholder="Preview text..."
+                              />
+                            </div>
                             <div className="flex flex-col gap-3">
-                              {/* Font Family */}
-                              <Popover className="relative">
-                                <Popover.Button className="flex items-center gap-2 px-3 py-1 rounded hover:bg-gray-100 w-full justify-between">
-                                  <span className="text-sm" style={{ fontFamily: sidebarFont.value }}>{sidebarFont.name}</span>
-                                  <ChevronDownIcon className="w-4 h-4" />
-                                </Popover.Button>
-                                <Popover.Panel className="absolute z-10 w-48 mt-2 bg-white rounded-md shadow-lg">
-                                  <div className="py-1">
-                                    {fonts.map((font) => (
-                                      <button
-                                        key={font.value}
-                                        className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-100"
-                                        style={{ fontFamily: font.value }}
-                                        onClick={() => updateTextFormat({ fontFamily: font.value })}
-                                      >
-                                        {font.name}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </Popover.Panel>
-                              </Popover>
-                              {/* Font Size */}
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => updateTextFormat({ fontSize: sidebarFontSize - 1 })}
-                                  className="p-1 rounded hover:bg-gray-100"
-                                >
-                                  <MinusIcon className="w-4 h-4" />
-                                </button>
-                                <span className="text-sm w-8 text-center">{sidebarFontSize}</span>
-                                <button
-                                  onClick={() => updateTextFormat({ fontSize: sidebarFontSize + 1 })}
-                                  className="p-1 rounded hover:bg-gray-100"
-                                >
-                                  <PlusIcon className="w-4 h-4" />
-                                </button>
+                              <div className="flex gap-2 items-center">
+                                <Popover className="relative flex-1">
+                                  <Popover.Button className="flex items-center gap-2 px-3 py-1 rounded hover:bg-gray-100 w-full justify-between border">
+                                    <span className="text-sm" style={{ fontFamily: sidebarFont.value }}>{sidebarFont.name}</span>
+                                    <ChevronDownIcon className="w-4 h-4" />
+                                  </Popover.Button>
+                                  <Popover.Panel className="absolute z-10 w-48 mt-2 bg-white rounded-md shadow-lg">
+                                    <div className="py-1">
+                                      {fonts.map((font) => (
+                                        <button
+                                          key={font.value}
+                                          className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-100"
+                                          style={{ fontFamily: font.value }}
+                                          onClick={() => updateTextFormat({ fontFamily: font.value })}
+                                        >
+                                          {font.name}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </Popover.Panel>
+                                </Popover>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => updateTextFormat({ fontSize: sidebarFontSize - 1 })}
+                                    className="p-1 rounded hover:bg-gray-100 border"
+                                    title="Decrease font size"
+                                  >
+                                    <MinusIcon className="w-4 h-4" />
+                                  </button>
+                                  <span className="text-sm w-8 text-center">{sidebarFontSize}</span>
+                                  <button
+                                    onClick={() => updateTextFormat({ fontSize: sidebarFontSize + 1 })}
+                                    className="p-1 rounded hover:bg-gray-100 border"
+                                    title="Increase font size"
+                                  >
+                                    <PlusIcon className="w-4 h-4" />
+                                  </button>
+                                </div>
                               </div>
-                              {/* Style Controls */}
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => updateTextFormat({ fontWeight: sidebarFontWeight === 700 ? 400 : 700 })}
-                                  className={`p-1 rounded hover:bg-gray-100 ${sidebarFontWeight === 700 ? 'bg-gray-200' : ''}`}
+                                  className={`p-1 rounded hover:bg-gray-100 border ${sidebarFontWeight === 700 ? 'bg-gray-200' : ''}`}
+                                  title="Bold"
                                 >
                                   <BoldIcon className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => updateTextFormat({ fontStyle: sidebarFontStyle === 'italic' ? 'normal' : 'italic' })}
-                                  className={`p-1 rounded hover:bg-gray-100 ${sidebarFontStyle === 'italic' ? 'bg-gray-200' : ''}`}
+                                  className={`p-1 rounded hover:bg-gray-100 border ${sidebarFontStyle === 'italic' ? 'bg-gray-200' : ''}`}
+                                  title="Italic"
                                 >
                                   <ItalicIcon className="w-4 h-4" />
                                 </button>
+                                <div className="flex-1 flex gap-1 justify-end">
+                                  <button
+                                    onClick={() => updateTextFormat({ textTransform: 'upper' })}
+                                    className={`p-1 rounded hover:bg-gray-100 border ${sidebarTextCase === 'upper' ? 'bg-gray-200' : ''}`}
+                                    title="UPPERCASE"
+                                  >
+                                    <span className="text-sm font-bold">AA</span>
+                                  </button>
+                                  <button
+                                    onClick={() => updateTextFormat({ textTransform: 'lower' })}
+                                    className={`p-1 rounded hover:bg-gray-100 border ${sidebarTextCase === 'lower' ? 'bg-gray-200' : ''}`}
+                                    title="lowercase"
+                                  >
+                                    <span className="text-sm font-bold">aa</span>
+                                  </button>
+                                  <button
+                                    onClick={() => updateTextFormat({ textTransform: 'normal' })}
+                                    className={`p-1 rounded hover:bg-gray-100 border ${sidebarTextCase === 'normal' ? 'bg-gray-200' : ''}`}
+                                    title="Normal Case"
+                                  >
+                                    <span className="text-sm font-bold">Aa</span>
+                                  </button>
+                                </div>
                               </div>
-                              {/* Font Weight Slider */}
-                              <div className="flex flex-col gap-1">
-                                <span className="text-xs text-gray-500">Weight</span>
-                                <input
-                                  type="range"
-                                  min="100"
-                                  max="900"
-                                  step="100"
-                                  value={sidebarFontWeight}
-                                  onChange={e => updateTextFormat({ fontWeight: parseInt(e.target.value) })}
-                                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                />
-                                <span className="text-xs">{sidebarFontWeight}</span>
-                              </div>
-                              {/* Text Case Controls */}
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => updateTextFormat({ textTransform: 'upper' })}
-                                  className={`p-1 rounded hover:bg-gray-100 ${sidebarTextCase === 'upper' ? 'bg-gray-200' : ''}`}
-                                  title="UPPERCASE"
-                                >
-                                  <span className="text-sm font-bold">AA</span>
-                                </button>
-                                <button
-                                  onClick={() => updateTextFormat({ textTransform: 'lower' })}
-                                  className={`p-1 rounded hover:bg-gray-100 ${sidebarTextCase === 'lower' ? 'bg-gray-200' : ''}`}
-                                  title="lowercase"
-                                >
-                                  <span className="text-sm font-bold">aa</span>
-                                </button>
-                                <button
-                                  onClick={() => updateTextFormat({ textTransform: 'normal' })}
-                                  className={`p-1 rounded hover:bg-gray-100 ${sidebarTextCase === 'normal' ? 'bg-gray-200' : ''}`}
-                                  title="Normal Case"
-                                >
-                                  <span className="text-sm font-bold">Aa</span>
-                                </button>
-                              </div>
-                              {/* Letter Spacing */}
                               <div className="flex flex-col gap-1">
                                 <span className="text-xs text-gray-500">Letter Spacing</span>
                                 <input
@@ -558,8 +546,7 @@ export default function Sidebar({ onRequestAddElement, selectedTextObject, onSid
                                 <span className="text-xs">{sidebarLetterSpacing}</span>
                               </div>
                             </div>
-                            {/* Preview */}
-                            <div className="flex-1 flex flex-col justify-end">
+                            <div className="flex-1 flex flex-col justify-end mt-4">
                               <div
                                 className="w-full p-3 rounded border bg-gray-50 text-center mb-4"
                                 style={{
@@ -579,7 +566,7 @@ export default function Sidebar({ onRequestAddElement, selectedTextObject, onSid
                               </div>
                               <button
                                 onClick={handleAddTextWithSidebarStyles}
-                                className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-center"
+                                className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-center text-base shadow-sm mt-2"
                                 style={{ marginTop: 'auto' }}
                               >
                                 Add Your Text
