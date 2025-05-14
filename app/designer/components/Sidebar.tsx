@@ -15,6 +15,7 @@ import {
   PlusIcon,
 } from '@heroicons/react/24/outline';
 import ElementsFolderBrowser from './ElementsFolderBrowser';
+import PreviewModal from './PreviewModal';
 
 // Custom shape components
 const HeartIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -102,6 +103,7 @@ interface SidebarProps {
   onRequestAddElement: (type: 'shape' | 'text', shape?: any) => void;
   selectedTextObject?: any;
   onSidebarTextUpdate?: (updates: any) => void;
+  onPreviewTopper?: () => void;
 }
 
 function classNames(...classes: string[]) {
@@ -190,7 +192,7 @@ const fonts = [
   { name: 'Lato', value: 'Lato' },
 ];
 
-export default function Sidebar({ onRequestAddElement, selectedTextObject, onSidebarTextUpdate }: SidebarProps) {
+export default function Sidebar({ onRequestAddElement, selectedTextObject, onSidebarTextUpdate, onPreviewTopper }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>('templates');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedDesignTab, setSelectedDesignTab] = useState(0);
@@ -344,7 +346,7 @@ export default function Sidebar({ onRequestAddElement, selectedTextObject, onSid
       </div>
 
       {/* Sub-Sidebar (always visible) */}
-      <div className="w-[300px] bg-white border-r overflow-hidden">
+      <div className="w-[300px] bg-white border-r overflow-hidden flex flex-col justify-between">
         <div className="h-full flex flex-col">
           <div className="p-4 border-b">
             <h2 className="text-lg font-semibold">
@@ -581,6 +583,15 @@ export default function Sidebar({ onRequestAddElement, selectedTextObject, onSid
               )}
             </AnimatePresence>
           </div>
+        </div>
+        {/* Preview Topper Button at the bottom */}
+        <div className="p-4 border-t">
+          <button
+            className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg text-center text-base shadow-sm"
+            onClick={onPreviewTopper}
+          >
+            Preview Topper
+          </button>
         </div>
       </div>
     </div>

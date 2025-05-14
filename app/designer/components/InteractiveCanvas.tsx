@@ -1037,8 +1037,10 @@ const InteractiveCanvas = forwardRef(function InteractiveCanvas(
       const canvas = fabricCanvasRef.current;
       if (!canvas) return { left: 0, top: 0 };
       return canvas.getCenter();
-    }
-  }), []);
+    },
+    getFabric: () => fabricCanvasRef.current,
+    getCakeTopY: () => cakeTopY,
+  }), [cakeTopY]);
 
   // Add BridgeText class for arched/bridge text effect
   useEffect(() => {

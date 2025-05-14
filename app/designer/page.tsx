@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import Sidebar from './components/Sidebar';
 import InteractiveCanvas, { FabricScriptLoader } from './components/InteractiveCanvas';
+import PreviewModal from './components/PreviewModal';
 
 interface DesignElement {
   id: string;
@@ -33,6 +34,9 @@ export default function Designer() {
   const canvasRef = useRef<any>(null);
   const [selectedTextObject, setSelectedTextObject] = useState<any>(null);
   const [textUpdateRequest, setTextUpdateRequest] = useState<{ updates: any; ts: number } | null>(null);
+  const [previewPng, setPreviewPng] = useState<string | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewBoundingBox, setPreviewBoundingBox] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
 
   // Load cake image
   useEffect(() => {
@@ -170,6 +174,70 @@ export default function Designer() {
     setTextUpdateRequest({ updates, ts: Date.now() });
   }, []);
 
+  const handlePreviewTopper = () => {
+    const canvas = canvasRef.current?.getFabric?.();
+    if (!canvas) return;
+
+    // Hide grid, cake, and ruler (but keep base and user elements)
+    const objects = canvas.getObjects();
+    const hidden: any[] = [];
+    objects.forEach((obj: any) => {
+      if (obj.data?.isGrid || obj.data?.isCake) {
+        hidden.push(obj);
+        obj.visible = false;
+      }
+    });
+
+    // Find bounding box of all user elements and the base
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    objects.forEach((obj: any) => {
+      if (obj.visible && (!obj.data?.isGrid && !obj.data?.isCake)) {
+        const bounds = obj.getBoundingRect();
+        minX = Math.min(minX, bounds.left);
+        minY = Math.min(minY, bounds.top);
+        maxX = Math.max(maxX, bounds.left + bounds.width);
+        maxY = Math.max(maxY, bounds.top + bounds.height);
+      }
+    });
+    // Ensure maxY includes the base's bottom edge
+    const baseObj = objects.find((obj: any) => obj.data?.isBase);
+    if (baseObj) {
+      const baseBounds = baseObj.getBoundingRect();
+      maxY = Math.max(maxY, baseBounds.top + baseBounds.height);
+    }
+    // Fallback to full canvas if nothing found
+    if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
+      minX = 0; minY = 0; maxX = canvas.width; maxY = canvas.height;
+    }
+    const exportWidth = Math.ceil(maxX - minX);
+    const exportHeight = Math.ceil(maxY - minY);
+
+    // Save and clear background color
+    const originalBg = canvas.backgroundColor;
+    canvas.setBackgroundColor(null, undefined);
+    canvas.renderAll();
+
+    // Export PNG (tight bounding box)
+    const pngDataUrl = canvas.toDataURL({
+      format: 'png',
+      left: minX,
+      top: minY,
+      width: exportWidth,
+      height: exportHeight,
+      multiplier: 1,
+    });
+
+    // Restore background color
+    canvas.setBackgroundColor(originalBg, undefined);
+    // Restore visibility
+    hidden.forEach((obj: any) => obj.visible = true);
+    canvas.renderAll();
+
+    setPreviewPng(pngDataUrl);
+    setPreviewBoundingBox({ left: minX, top: minY, width: exportWidth, height: exportHeight });
+    setShowPreviewModal(true);
+  };
+
   return (
     <>
       {/* Remove <FabricScriptLoader /> since Fabric.js is loaded globally */}
@@ -225,6 +293,7 @@ export default function Designer() {
               onRequestAddElement={handleRequestAddElement}
               selectedTextObject={selectedTextObject}
               onSidebarTextUpdate={handleSidebarTextUpdate}
+              onPreviewTopper={handlePreviewTopper}
             />
 
             {/* Main Canvas Area */}
@@ -242,6 +311,10 @@ export default function Designer() {
               />
             </div>
           </div>
+          {/* Preview Modal */}
+          {showPreviewModal && (
+            <PreviewModal onClose={() => setShowPreviewModal(false)} topperPng={previewPng} boundingBox={previewBoundingBox} />
+          )}
         </div>
       ) : (
         <div className="h-screen flex items-center justify-center bg-white">
